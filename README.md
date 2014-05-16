@@ -5,6 +5,8 @@ A bash script for synchronizing wordpress over ssh
 
 Use with caution and at your own risk.
 
+Do not add the configuration file to version control!
+
 
 
 # Installation

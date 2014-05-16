@@ -27,5 +27,13 @@ Edit it in your favorite text editor.
 
 The script assumes that you already have ssh access to the remote server through using your ssh keys.
 
+## Available commands
+
+    wpsync push_db
+    wpsync pull_db
+    wpsync push_files
+    wpsync pull_files
+    
+
 # Changelog
 v.0.0.1

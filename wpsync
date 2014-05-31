@@ -1,12 +1,10 @@
 #!/bin/bash -u
 
-# wpsync version 0.0.1
 
+#-----------------------------------------------------------
+# wpsync version 0.0.2
 # installation: ln -s /path/to/wpsync /usr/local/bin/wpsync
-
-
-#CWD=$(pwd)
-
+# ----------------------------------------------------------
 
 
 # pretty colours
@@ -31,18 +29,6 @@ else
 fi
 
 
-
-
-
-
-
-
-testing () {
-  # function for quickly testing things
-  echo "test"
-}
-
-
 help (){
   echo "${blue}Available commands:"
   echo "–––––"
@@ -55,70 +41,35 @@ help (){
 
 }
 
-
-if [ ! -f wpsync-config.sh ]
-then
-    help
-    echo "${red}Config file does not exist"
-    echo
-    exit 1
-else
-    echo "Config file found. Sourcing variables"
-    echo
-fi
-
-
-source wpsync-config.sh
-
-
-
-for var in r_user r_host r_web_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_user r_db_name r_db_user r_db_pass l_upload_dir r_upload_dir; do
-    if [ -n "${!var}" ] ; then
-        echo "$var is set to ${!var}"
-    else
-        echo "$var is not set"
-    fi
-done
-
-
-
-#r_search_and_replace="USE $r_db_name; UPDATE wp_options SET option_value=\"$r_web_addr\" WHERE option_name=\"siteurl\"; UPDATE wp_options SET option_value=\"$r_web_addr\" WHERE option_name=\"home\";"
-
-#l_search_and_replace="USE $l_db_name; UPDATE wp_options SET option_value=\"$l_web_addr\" WHERE option_name=\"siteurl\"; UPDATE wp_options SET option_value=\"$l_web_addr\" WHERE option_name=\"home\";"
-
-
-
-
-
 push_db () {
 	echo "dump local db"
 
-	mysqldump -u $l_db_user -p$l_db_pass $l_db_name > local-db.sql
+	mysqldump -u $l_db_user -p$l_db_pass $l_db_name > $wpsyncdir/local-db.sql
 
   #search and replace
-  sed -i "" "s,$l_web_addr,$r_web_addr,g" local-db.sql
+  sed -i "" "s,$l_web_addr,$r_web_addr,g" $wpsyncdir/local-db.sql
 
 	echo "uploading local db"
 
-	scp local-db.sql $r_user@$r_host:$r_web_dir/
+	scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
 
-	echo "ready."
+	echo "${green}ready."
 
 	echo "dumping remote db as backup && populate remote db with local db"
 
-	ssh $r_user@$r_host "cd $r_web_dir \
-	&& mysqldump -u $r_db_user -p$r_db_pass $r_db_name > remote-db.sql \
-	&& mysql -u $r_db_user -p$r_db_pass $r_db_name < local-db.sql"
+	ssh $r_user@$r_host "mysqldump -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql \
+	&& mysql -u $r_db_user -p$r_db_pass $r_db_name < $r_dir/$wpsyncdir/local-db.sql"
 
 	echo "ready."
 
 }
 
+
 push_files () {
 
   echo "pushing files via rsync …"
 
-	rsync -a $l_upload_dir $r_user@$r_host:$r_web_dir/$r_upload_dir
+	rsync -a $l_upload_dir $r_user@$r_host:$r_upload_dir
 
 	echo "ready."
 
@@ -130,7 +81,7 @@ pull_files () {
 
   echo "pulling files via rsync …"
 
-  rsync -a $r_user@$r_host:$r_web_dir/$r_upload_dir $l_upload_dir
+  rsync -a $r_user@$r_host:$r_upload_dir $l_upload_dir
 
   echo "ready."
 
@@ -138,31 +89,24 @@ pull_files () {
 }
 
 
-
-
-
-
 pull_db(){
 
   echo "dump remote db"
 
-  ssh $r_user@$r_host "cd $r_web_dir \
-  && mysqldump -u $r_db_user -p$r_db_pass $r_db_name > remote-db.sql"
-
+  ssh $r_user@$r_host "mysqldump -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql"
 
   echo "downloading local db"
 
-  scp $r_user@$r_host:$r_web_dir/remote-db.sql remote-db.sql
+  scp $r_user@$r_host:$r_dir/$wpsyncdir/remote-db.sql $wpsyncdir/remote-db.sql
 
   echo "ready."
-
   
   echo "search replace and then populate local db with remote db"
 
   #search and replace
-  sed -i "" "s,$r_web_addr,$l_web_addr,g" remote-db.sql
+  sed -i "" "s,$r_web_addr,$l_web_addr,g" $wpsyncdir/remote-db.sql
 
-  mysql -u $l_db_user -p$l_db_pass $l_db_name < remote-db.sql
+  mysql -u $l_db_user -p$l_db_pass $l_db_name < $wpsyncdir/remote-db.sql
 }
 
 
@@ -175,17 +119,45 @@ pull_db(){
 #  ACTUAL SCRIPT EXECUTION
 # ====================================
 
-echo 
+echo ${yellow} 
 echo "–––––––––––––"
-echo "wpSync v0.0.1"
+echo "wpSync v0.0.2"
 echo "–––––––––––––"
 echo
+
+
+wpsyncdir=".wpsync"
+
+if [ ! -f $wpsyncdir/config ]
+then
+    help
+    echo "${red}Config file does not exist"
+    echo
+    exit 1
+else
+    echo "${green}Config file found. Sourcing variables"
+    echo
+fi
+
+
+source $wpsyncdir/config
+
+for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_user r_db_name r_db_user r_db_pass l_upload_dir r_upload_dir; do
+    if [ -n "${!var}" ] ; then
+        echo "$var is set to ${!var}"
+    else
+        echo "$var is not set"
+        echo "exiting …"
+        exit 1
+    fi
+done
+
 
 # if an argument is passed (the number of arguments is not equal to zero), then check if that command is valid or not.
 if [ $# -ne 0 ]
 then
     # place all the command names in an array
-    declare -a list_of_methods=(testing push_db push_files pull_db pull_files)
+    declare -a list_of_methods=(push_db push_files pull_db pull_files help)
 
     # function to check if an item exists in an array
     contains_element () {

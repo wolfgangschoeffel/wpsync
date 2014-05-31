@@ -7,9 +7,60 @@
 
 #CWD=$(pwd)
 
+
+
+# pretty colours
+if [ "$TERM" != "dumb" ]; then
+    red=$(tput setaf 1 || tput AF 1)
+    green=$(tput setaf 2 || tput AF 2)
+    yellow=$(tput setaf 3 || tput AF 3)
+    blue=$(tput setaf 4 || tput AF 4)
+    magenta=$(tput setaf 5 || tput AF 5)
+    cyan=$(tput setaf 6 || tput AF 6)
+    reset=$(tput sgr0)
+    bold=$(tput bold)
+else
+    red=
+    green=
+    yellow=
+    blue=
+    magenta=
+    cyan=
+    reset=
+    bold=
+fi
+
+
+
+
+
+
+
+
+testing () {
+  # function for quickly testing things
+  echo "test"
+}
+
+
+help (){
+  echo "${blue}Available commands:"
+  echo "–––––"
+  echo "push_db"
+  echo "push_files"
+  echo "–––––"
+  echo "pull_db"
+  echo "pull_files"
+  echo "–––––"
+
+}
+
+
 if [ ! -f wpsync-config.sh ]
 then
-    echo "Config file does not exist"
+    help
+    echo "${red}Config file does not exist"
+    echo
     exit 1
 else
     echo "Config file found. Sourcing variables"
@@ -31,34 +82,21 @@ done
 
 
 
-r_search_and_replace="USE $r_db_name; UPDATE wp_options SET option_value=\"$r_web_addr\" WHERE option_name=\"siteurl\"; UPDATE wp_options SET option_value=\"$r_web_addr\" WHERE option_name=\"home\";"
+#r_search_and_replace="USE $r_db_name; UPDATE wp_options SET option_value=\"$r_web_addr\" WHERE option_name=\"siteurl\"; UPDATE wp_options SET option_value=\"$r_web_addr\" WHERE option_name=\"home\";"
 
-l_search_and_replace="USE $l_db_name; UPDATE wp_options SET option_value=\"$l_web_addr\" WHERE option_name=\"siteurl\"; UPDATE wp_options SET option_value=\"$l_web_addr\" WHERE option_name=\"home\";"
-
-
-testing () {
-  # function for quickly testing things
-  echo "test"
-}
+#l_search_and_replace="USE $l_db_name; UPDATE wp_options SET option_value=\"$l_web_addr\" WHERE option_name=\"siteurl\"; UPDATE wp_options SET option_value=\"$l_web_addr\" WHERE option_name=\"home\";"
 
 
-help (){
-  echo "Available commands:"
-  echo "–––––"
-  echo "push_db"
-  echo "push_files"
-  echo "–––––"
-  echo "pull_db"
-  echo "pull_files"
-  echo "–––––"
 
-}
 
 
 push_db () {
 	echo "dump local db"
 
 	mysqldump -u $l_db_user -p$l_db_pass $l_db_name > local-db.sql
+
+  #search and replace
+  sed -i "" "s,$l_web_addr,$r_web_addr,g" local-db.sql
 
 	echo "uploading local db"
 
@@ -70,8 +108,7 @@ push_db () {
 
 	ssh $r_user@$r_host "cd $r_web_dir \
 	&& mysqldump -u $r_db_user -p$r_db_pass $r_db_name > remote-db.sql \
-	&& mysql -u $r_db_user -p$r_db_pass $r_db_name < local-db.sql \
-	&& mysql -u $r_db_user -p$r_db_pass $r_db_name -Bse '$r_search_and_replace'"
+	&& mysql -u $r_db_user -p$r_db_pass $r_db_name < local-db.sql"
 
 	echo "ready."
 
@@ -120,10 +157,12 @@ pull_db(){
   echo "ready."
 
   
-  echo "populating local db with remote db and search replace"
+  echo "search replace and then populate local db with remote db"
+
+  #search and replace
+  sed -i "" "s,$r_web_addr,$l_web_addr,g" remote-db.sql
 
   mysql -u $l_db_user -p$l_db_pass $l_db_name < remote-db.sql
-  mysql -u $l_db_user -p$l_db_pass $l_db_name -Bse '$l_search_and_replace'
 }
 
 

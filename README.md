@@ -21,7 +21,7 @@ Do not add the configuration file to version control!
 
 # Usage
     
-Copy the configuration file ```wpsync-config-example.sh``` to your wordpess installation’s folder and rename it to ```wpsync-config.sh```
+Copy the configuration file ```config-example``` to a folder called .wpsync and rename it to ```config```
 
 Edit it in your favorite text editor.
 
@@ -36,4 +36,10 @@ The script assumes that you already have ssh access to the remote server through
     
 
 # Changelog
-v.0.0.1
+
+## 0.0.2 (June 01, 2014)
+
+* add some colors
+* search and replace whole database
+* move config file to a .wpsync folder where also the backup files will be stored
+* add datetime to backup files

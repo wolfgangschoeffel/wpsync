@@ -174,8 +174,8 @@ for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_us
         echo "$var is set to ${!var}"
     else
         echo "${red}$var is not set${reset}"
-        echo "exiting …"
-        exit 1
+        #echo "exiting …"
+        #exit 1
     fi
 done
 

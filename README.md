@@ -21,7 +21,7 @@ Do not add the configuration file to version control!
 
 # Usage
     
-Copy the configuration file ```config-example``` to a folder called .wpsync and rename it to ```config```
+Copy the configuration file ```config-sample``` to a folder called ```.wpsync`` and rename it to ```config```
 
 Edit it in your favorite text editor.
 

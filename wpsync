@@ -1,10 +1,14 @@
 #!/bin/bash -u
 
+# to do:
+# add date to backup files date +%Y-%m-%d
+#
 
 #-----------------------------------------------------------
 # wpsync version 0.0.2
 # installation: ln -s /path/to/wpsync /usr/local/bin/wpsync
 # ----------------------------------------------------------
+
 
 
 # pretty colours
@@ -37,23 +41,31 @@ help (){
   echo "–––––"
   echo "pull_db"
   echo "pull_files"
-  echo "–––––"
+  echo "–––––${reset}"
 
 }
 
 push_db () {
+
 	echo "dump local db"
 
 	mysqldump -u $l_db_user -p$l_db_pass $l_db_name > $wpsyncdir/local-db.sql
 
   #search and replace
+  cp $wpsyncdir/local-db.sql $wpsyncdir/local-db.$current_date.sql.bak
   sed -i "" "s,$l_web_addr,$r_web_addr,g" $wpsyncdir/local-db.sql
+
+  echo "create .wpsync directory if it does not exist yet"
+
+  ssh $r_user@$r_host "mkdir $r_dir/$wpsyncdir"
 
 	echo "uploading local db"
 
 	scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
 
-	echo "${green}ready."
+  rm $wpsyncdir/local-db.sql
+
+	echo "${green}ready.${reset}"
 
 	echo "dumping remote db as backup && populate remote db with local db"
 
@@ -71,7 +83,7 @@ push_files () {
 
 	rsync -a $l_upload_dir $r_user@$r_host:$r_upload_dir
 
-	echo "ready."
+	echo "${green}ready.${reset}"
 
 
 }
@@ -83,7 +95,7 @@ pull_files () {
 
   rsync -a $r_user@$r_host:$r_upload_dir $l_upload_dir
 
-  echo "ready."
+  echo "${green}ready.${reset}"
 
 
 }
@@ -91,15 +103,22 @@ pull_files () {
 
 pull_db(){
 
+  echo "dump local db as backup"
+
+  mysqldump -u $l_db_user -p$l_db_pass $l_db_name > $wpsyncdir/local-db.${current_date}.sql.bak
+
   echo "dump remote db"
 
   ssh $r_user@$r_host "mysqldump -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql"
 
-  echo "downloading local db"
+  echo "downloading remote db"
 
   scp $r_user@$r_host:$r_dir/$wpsyncdir/remote-db.sql $wpsyncdir/remote-db.sql
 
-  echo "ready."
+  #remove remote dumpfile:
+  ssh $r_user@$r_host "rm $r_dir/$wpsyncdir/remote-db.sql"
+
+  echo "${green}ready.${reset}"
   
   echo "search replace and then populate local db with remote db"
 
@@ -107,6 +126,13 @@ pull_db(){
   sed -i "" "s,$r_web_addr,$l_web_addr,g" $wpsyncdir/remote-db.sql
 
   mysql -u $l_db_user -p$l_db_pass $l_db_name < $wpsyncdir/remote-db.sql
+
+  echo "cleanup"
+  #remove remote sql dump locally
+  rm $wpsyncdir/remote-db.sql
+
+  echo "${green}ready.${reset}"
+
 }
 
 
@@ -123,19 +149,20 @@ echo ${yellow}
 echo "–––––––––––––"
 echo "wpSync v0.0.2"
 echo "–––––––––––––"
-echo
+echo "${reset}"
 
 
 wpsyncdir=".wpsync"
+current_date=$(date +%Y-%m-%d-%H-%M)
 
 if [ ! -f $wpsyncdir/config ]
 then
     help
-    echo "${red}Config file does not exist"
+    echo "${red}Config file does not exist${reset}"
     echo
     exit 1
 else
-    echo "${green}Config file found. Sourcing variables"
+    echo "${green}Config file found. Sourcing variables${reset}"
     echo
 fi
 
@@ -146,7 +173,7 @@ for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_us
     if [ -n "${!var}" ] ; then
         echo "$var is set to ${!var}"
     else
-        echo "$var is not set"
+        echo "${red}$var is not set${reset}"
         echo "exiting …"
         exit 1
     fi

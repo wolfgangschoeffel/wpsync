@@ -81,7 +81,7 @@ push_files () {
 
   echo "pushing files via rsync …"
 
-	rsync -a $l_upload_dir $r_user@$r_host:$r_upload_dir
+	rsync -a $l_upload_dir/ $r_user@$r_host:$r_upload_dir/
 
 	echo "${green}ready.${reset}"
 
@@ -93,7 +93,7 @@ pull_files () {
 
   echo "pulling files via rsync …"
 
-  rsync -a $r_user@$r_host:$r_upload_dir $l_upload_dir
+  rsync -a $r_user@$r_host:$r_upload_dir/ $l_upload_dir/
 
   echo "${green}ready.${reset}"
 

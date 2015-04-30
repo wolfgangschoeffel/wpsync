@@ -13,5 +13,11 @@ r_db_name= # remote database name
 r_db_user= # remote database user
 r_db_pass= # remoate database password
 
-l_upload_dir= # local wordpress upload folder www/wp-content/uploads/ (relative to local working directory)
-r_upload_dir= # remote wordpress upload folder project/www/wp-content/uploads/ (relative to remote login/home directory)
+l_upload_dir= # optional – local wordpress upload folder www/wp-content/uploads/ (relative to local working directory)
+r_upload_dir= # optional – remote wordpress upload folder project/www/wp-content/uploads/ (relative to remote login/home directory)
+
+l_plugin_dir= # optional – local wordpress upload folder www/wp-content/uploads/ (relative to local working directory)
+r_plugin_dir= # optional – remote wordpress upload folder project/www/wp-content/uploads/ (relative to remote login/home directory)
+
+l_db_charset= # optional – utf8
+r_db_charset= # optional – wordpress now uses utf8mb4 if supported

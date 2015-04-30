@@ -45,6 +45,7 @@ help (){
 
 }
 
+
 push_db () {
 
 	echo "dump local db"
@@ -54,6 +55,14 @@ push_db () {
   #search and replace
   cp $wpsyncdir/local-db.sql $wpsyncdir/local-db.$current_date.sql.bak
   sed -i "" "s,$l_web_addr,$r_web_addr,g" $wpsyncdir/local-db.sql
+
+  if [ -n "$r_db_charset" ] && [ -n "$r_db_charset" ] ; then
+
+    echo "search replace database charset"
+
+    sed -i "" "s,$l_db_charset,$r_db_charset,g" $wpsyncdir/local-db.sql
+
+  fi
 
   echo "create .wpsync directory if it does not exist yet"
 
@@ -76,31 +85,6 @@ push_db () {
 
 }
 
-
-push_files () {
-
-  echo "pushing files via rsync …"
-
-	rsync -a $l_upload_dir/ $r_user@$r_host:$r_upload_dir/
-
-	echo "${green}ready.${reset}"
-
-
-}
-
-
-pull_files () {
-
-  echo "pulling files via rsync …"
-
-  rsync -a $r_user@$r_host:$r_upload_dir/ $l_upload_dir/
-
-  echo "${green}ready.${reset}"
-
-
-}
-
-
 pull_db(){
 
   echo "dump local db as backup"
@@ -119,11 +103,20 @@ pull_db(){
   ssh $r_user@$r_host "rm $r_dir/$wpsyncdir/remote-db.sql"
 
   echo "${green}ready.${reset}"
-  
-  echo "search replace and then populate local db with remote db"
 
-  #search and replace
+  echo "search replace web address strings"
+
   sed -i "" "s,$r_web_addr,$l_web_addr,g" $wpsyncdir/remote-db.sql
+
+  if [ -n "$r_db_charset" ] && [ -n "$r_db_charset" ] ; then
+
+    echo "search replace database charset"
+
+    sed -i "" "s,$r_db_charset,$l_db_charset,g" $wpsyncdir/remote-db.sql
+
+  fi
+
+  echo "populate local db with remote db"
 
   mysql -u $l_db_user -p$l_db_pass $l_db_name < $wpsyncdir/remote-db.sql
 
@@ -136,6 +129,52 @@ pull_db(){
 }
 
 
+push_files () {
+
+  echo "pushing files via rsync …"
+
+  rsync -a $l_upload_dir/ $r_user@$r_host:$r_upload_dir/
+
+  echo "${green}ready.${reset}"
+
+
+}
+
+
+pull_files () {
+
+  echo "pulling files via rsync …"
+
+  rsync -a $r_user@$r_host:$r_upload_dir/ $l_upload_dir/
+
+  echo "${green}ready.${reset}"
+
+}
+
+
+push_plugins () {
+
+  echo "pushing plugins via rsync …"
+
+  rsync -a $l_plugin_dir/ $r_user@$r_host:$r_plugin_dir/
+
+  echo "${green}ready.${reset}"
+
+}
+
+
+pull_plugins () {
+
+  echo "pulling plugins via rsync …"
+
+  rsync -a $l_plugin_dir/ $r_user@$r_host:$r_plugin_dir/
+
+  echo "${green}ready.${reset}"
+
+}
+
+
+
 
 
 
@@ -145,9 +184,9 @@ pull_db(){
 #  ACTUAL SCRIPT EXECUTION
 # ====================================
 
-echo ${yellow} 
+echo ${yellow}
 echo "–––––––––––––"
-echo "wpSync v0.0.2"
+echo "wpSync v0.0.3"
 echo "–––––––––––––"
 echo "${reset}"
 
@@ -169,7 +208,28 @@ fi
 
 source $wpsyncdir/config
 
-for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_user r_db_name r_db_user r_db_pass l_upload_dir r_upload_dir; do
+# automatically set upload dirs if they are not provided in the config file
+
+if [ -z "${l_upload_dir:-}" ] ; then
+  l_upload_dir="wp-content/uploads"
+fi
+
+if [ -z "${r_upload_dir:-}" ] ; then
+  r_upload_dir="${r_dir}/wp-content/uploads"
+fi
+
+# automatically set plugin dirs if they are not provided in the config file
+
+if [ -z "${l_plugin_dir:-}" ] ; then
+  l_plugin_dir="wp-content/plugins"
+fi
+
+if [ -z "${r_plugin_dir:-}" ] ; then
+  r_plugin_dir="${r_dir}/wp-content/plugins"
+fi
+
+
+for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_user r_db_name r_db_user r_db_pass l_upload_dir r_upload_dir l_db_charset r_db_charset l_plugin_dir r_plugin_dir; do
     if [ -n "${!var}" ] ; then
         echo "$var is set to ${!var}"
     else
@@ -184,7 +244,7 @@ done
 if [ $# -ne 0 ]
 then
     # place all the command names in an array
-    declare -a list_of_methods=(push_db push_files pull_db pull_files help)
+    declare -a list_of_methods=(push_db push_files pull_db pull_files push_plugins pull_plugins help)
 
     # function to check if an item exists in an array
     contains_element () {
@@ -199,11 +259,12 @@ then
 
     # if command is invalid, list the valid ones
     if [[ $? -eq 1 ]]
-    then 
-        echo Error: Command not found:
+    then
+        echo Error: Command not found!
         echo
 
         help
+        exit 1
     fi
 
 fi
@@ -213,4 +274,4 @@ fi
 ${@:-help}
 
 
-exit 
+exit

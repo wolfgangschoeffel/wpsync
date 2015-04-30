@@ -33,7 +33,8 @@ The script assumes that you already have ssh access to the remote server through
     wpsync pull_db
     wpsync push_files
     wpsync pull_files
-    
+    wpsync push_plugins
+    wpsync pull_plugins
 
 # Changelog
 

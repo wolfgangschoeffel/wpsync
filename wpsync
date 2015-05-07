@@ -56,7 +56,7 @@ push_db () {
   cp $wpsyncdir/local-db.sql $wpsyncdir/local-db.$current_date.sql.bak
   sed -i "" "s,$l_web_addr,$r_web_addr,g" $wpsyncdir/local-db.sql
 
-  if [ -n "$r_db_charset" ] && [ -n "$r_db_charset" ] ; then
+  if [ -n "${r_db_charset+x}" ] && [ -n "${l_db_charset+x}" ] ; then
 
     echo "search replace database charset"
 
@@ -108,7 +108,7 @@ pull_db(){
 
   sed -i "" "s,$r_web_addr,$l_web_addr,g" $wpsyncdir/remote-db.sql
 
-  if [ -n "$r_db_charset" ] && [ -n "$r_db_charset" ] ; then
+  if [ -n "${r_db_charset+x}" ] && [ -n "${l_db_charset+x}" ] ; then
 
     echo "search replace database charset"
 
@@ -230,8 +230,8 @@ fi
 
 
 for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_user r_db_name r_db_user r_db_pass l_upload_dir r_upload_dir l_db_charset r_db_charset l_plugin_dir r_plugin_dir; do
-    if [ -n "${!var}" ] ; then
-        echo "$var is set to ${!var}"
+    if [ -n "$var+x" ] ; then
+        echo "$var is set to ${var}"
     else
         echo "${red}$var is not set${reset}"
         #echo "exiting …"

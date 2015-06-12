@@ -48,19 +48,19 @@ help (){
 
 push_db () {
 
-	echo "dump local db"
+  echo "dump local db"
 
-	mysqldump -u $l_db_user -p$l_db_pass $l_db_name > $wpsyncdir/local-db.sql
+  mysqldump -u $l_db_user -p$l_db_pass $l_db_name > $wpsyncdir/local-db.sql
 
   #search and replace
   cp $wpsyncdir/local-db.sql $wpsyncdir/local-db.$current_date.sql.bak
-  sed -i "" "s,$l_web_addr,$r_web_addr,g" $wpsyncdir/local-db.sql
+  sed -i "s,$l_web_addr,$r_web_addr,g" $wpsyncdir/local-db.sql
 
   if [ -n "${r_db_charset+x}" ] && [ -n "${l_db_charset+x}" ] ; then
 
     echo "search replace database charset"
 
-    sed -i "" "s,$l_db_charset,$r_db_charset,g" $wpsyncdir/local-db.sql
+    sed -i "s,$l_db_charset,$r_db_charset,g" $wpsyncdir/local-db.sql
 
   fi
 
@@ -68,20 +68,20 @@ push_db () {
 
   ssh $r_user@$r_host "mkdir $r_dir/$wpsyncdir"
 
-	echo "uploading local db"
+  echo "uploading local db"
 
-	scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
+  scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
 
   rm $wpsyncdir/local-db.sql
 
-	echo "${green}ready.${reset}"
+  echo "${green}ready.${reset}"
 
-	echo "dumping remote db as backup && populate remote db with local db"
+  echo "dumping remote db as backup && populate remote db with local db"
 
-	ssh $r_user@$r_host "mysqldump -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql \
-	&& mysql -u $r_db_user -p$r_db_pass $r_db_name < $r_dir/$wpsyncdir/local-db.sql"
+  ssh $r_user@$r_host "mysqldump -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql \
+  && mysql -u $r_db_user -p$r_db_pass $r_db_name < $r_dir/$wpsyncdir/local-db.sql"
 
-	echo "ready."
+  echo "ready."
 
 }
 
@@ -106,13 +106,13 @@ pull_db(){
 
   echo "search replace web address strings"
 
-  sed -i "" "s,$r_web_addr,$l_web_addr,g" $wpsyncdir/remote-db.sql
+  sed -i "s,$r_web_addr,$l_web_addr,g" $wpsyncdir/remote-db.sql
 
   if [ -n "${r_db_charset+x}" ] && [ -n "${l_db_charset+x}" ] ; then
 
     echo "search replace database charset"
 
-    sed -i "" "s,$r_db_charset,$l_db_charset,g" $wpsyncdir/remote-db.sql
+    sed -i "s,$r_db_charset,$l_db_charset,g" $wpsyncdir/remote-db.sql
 
   fi
 
@@ -122,7 +122,7 @@ pull_db(){
 
   echo "cleanup"
   #remove remote sql dump locally
-  rm $wpsyncdir/remote-db.sql
+  #rm $wpsyncdir/remote-db.sql
 
   echo "${green}ready.${reset}"
 

@@ -84,15 +84,15 @@ push_db () {
 
   ssh $r_user@$r_host "mkdir $r_dir/$wpsyncdir"
 
-    echo "uploading local db"
+  echo "uploading local db"
 
-    scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
+  scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
 
   rm $wpsyncdir/local-db.sql
 
-    echo "${green}ready.${reset}"
+  echo "${green}ready.${reset}"
 
-    echo "dumping remote db as backup && populate remote db with local db"
+  echo "dumping remote db as backup && populate remote db with local db"
 
   if [ -n "${r_db_host+x}" ] ; then
 

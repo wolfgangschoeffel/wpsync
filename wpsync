@@ -48,7 +48,7 @@ help (){
 
 push_db () {
 
-	echo "dump local db"
+  echo "dump local db"
 
   if [ -n "${l_db_user+x}" ] && [ -n "${l_db_pass+x}" ] ; then
 
@@ -84,15 +84,15 @@ push_db () {
 
   ssh $r_user@$r_host "mkdir $r_dir/$wpsyncdir"
 
-	echo "uploading local db"
+    echo "uploading local db"
 
-	scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
+    scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
 
   rm $wpsyncdir/local-db.sql
 
-	echo "${green}ready.${reset}"
+    echo "${green}ready.${reset}"
 
-	echo "dumping remote db as backup && populate remote db with local db"
+    echo "dumping remote db as backup && populate remote db with local db"
 
   if [ -n "${r_db_host+x}" ] ; then
 
@@ -294,7 +294,7 @@ if [ -z "${r_plugin_dir:-}" ] ; then
 fi
 
 
-for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_user r_db_name r_db_user r_db_pass l_upload_dir r_upload_dir l_db_charset r_db_charset l_plugin_dir r_plugin_dir; do
+for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_user r_db_name r_db_user r_db_pass r_db_host l_upload_dir r_upload_dir l_db_charset r_db_charset l_plugin_dir r_plugin_dir; do
     if [ -n "$var+x" ] ; then
         echo "$var is set to ${var}"
     else

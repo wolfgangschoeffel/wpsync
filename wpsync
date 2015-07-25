@@ -48,9 +48,25 @@ help (){
 
 push_db () {
 
-	echo "dump local db"
+  echo "dump local db"
 
-	mysqldump -u $l_db_user -p$l_db_pass $l_db_name > $wpsyncdir/local-db.sql
+  if [ -n "${l_db_user+x}" ] && [ -n "${l_db_pass+x}" ] ; then
+
+    mysqldump -u $l_db_user -p$l_db_pass $l_db_name > $wpsyncdir/local-db.sql
+
+  elif [ -n "${l_db_user+x}" ] ; then
+
+    mysqldump -u $l_db_user $l_db_name > $wpsyncdir/local-db.sql
+
+  elif [ -n "${l_db_pass+x}" ] ; then
+
+    mysqldump -p$l_db_pass $l_db_name > $wpsyncdir/local-db.sql
+
+  else
+
+    mysqldump $l_db_name > $wpsyncdir/local-db.sql 
+
+  fi
 
   #search and replace
   cp $wpsyncdir/local-db.sql $wpsyncdir/local-db.$current_date.sql.bak
@@ -68,20 +84,29 @@ push_db () {
 
   ssh $r_user@$r_host "mkdir $r_dir/$wpsyncdir"
 
-	echo "uploading local db"
+  echo "uploading local db"
 
-	scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
+  scp $wpsyncdir/local-db.sql $r_user@$r_host:$r_dir/$wpsyncdir/
 
   rm $wpsyncdir/local-db.sql
 
-	echo "${green}ready.${reset}"
+  echo "${green}ready.${reset}"
 
-	echo "dumping remote db as backup && populate remote db with local db"
+  echo "dumping remote db as backup && populate remote db with local db"
 
-	ssh $r_user@$r_host "mysqldump -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql \
-	&& mysql -u $r_db_user -p$r_db_pass $r_db_name < $r_dir/$wpsyncdir/local-db.sql"
+  if [ -n "${r_db_host+x}" ] ; then
 
-	echo "ready."
+    ssh $r_user@$r_host "mysqldump -h $r_db_host -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql \
+    && mysql -u $r_db_user -h $r_db_host -p$r_db_pass $r_db_name < $r_dir/$wpsyncdir/local-db.sql"
+
+  else
+
+    ssh $r_user@$r_host "mysqldump -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql \
+    && mysql -u $r_db_user -p$r_db_pass $r_db_name < $r_dir/$wpsyncdir/local-db.sql"
+
+  fi
+
+  echo "ready."
 
 }
 
@@ -89,11 +114,35 @@ pull_db(){
 
   echo "dump local db as backup"
 
-  mysqldump -u $l_db_user -p$l_db_pass $l_db_name > $wpsyncdir/local-db.${current_date}.sql.bak
+  if [ -n "${l_db_user+x}" ] && [ -n "${l_db_pass+x}" ] ; then
+
+    mysqldump -u $l_db_user -p$l_db_pass $l_db_name > $wpsyncdir/local-db.${current_date}.sql.bak
+
+  elif [ -n "${l_db_user+x}" ] ; then
+
+    mysqldump -u $l_db_user $l_db_name > $wpsyncdir/local-db.${current_date}.sql.bak
+
+  elif [ -n "${l_db_pass+x}" ] ; then
+
+    mysqldump -p$l_db_pass $l_db_name > $wpsyncdir/local-db.${current_date}.sql.bak
+
+  else
+
+    mysqldump $l_db_name > $wpsyncdir/local-db.${current_date}.sql.bak
+
+  fi
 
   echo "dump remote db"
 
-  ssh $r_user@$r_host "mysqldump -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql"
+  if [ -n "${r_db_host+x}" ] ; then
+
+    ssh $r_user@$r_host "mysqldump -h $r_db_host -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql"
+
+  else
+
+    ssh $r_user@$r_host "mysqldump -u $r_db_user -p$r_db_pass $r_db_name > $r_dir/$wpsyncdir/remote-db.sql"
+
+  fi
 
   echo "downloading remote db"
 
@@ -118,7 +167,23 @@ pull_db(){
 
   echo "populate local db with remote db"
 
-  mysql -u $l_db_user -p$l_db_pass $l_db_name < $wpsyncdir/remote-db.sql
+  if [ -n "${l_db_user+x}" ] && [ -n "${l_db_pass+x}" ] ; then
+
+    mysql -u $l_db_user -p$l_db_pass $l_db_name < $wpsyncdir/remote-db.sql
+
+  elif [ -n "${l_db_user+x}" ] ; then
+
+    mysql -u $l_db_user $l_db_name < $wpsyncdir/remote-db.sql
+
+  elif [ -n "${l_db_pass+x}" ] ; then
+
+    mysql -p$l_db_pass $l_db_name < $wpsyncdir/remote-db.sql
+
+  else
+
+    mysql $l_db_name < $wpsyncdir/remote-db.sql
+
+  fi
 
   echo "cleanup"
   #remove remote sql dump locally
@@ -229,7 +294,7 @@ if [ -z "${r_plugin_dir:-}" ] ; then
 fi
 
 
-for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_user r_db_name r_db_user r_db_pass l_upload_dir r_upload_dir l_db_charset r_db_charset l_plugin_dir r_plugin_dir; do
+for var in r_user r_host r_dir r_web_addr l_web_addr l_db_name l_db_pass l_db_user r_db_name r_db_user r_db_pass r_db_host l_upload_dir r_upload_dir l_db_charset r_db_charset l_plugin_dir r_plugin_dir; do
     if [ -n "$var+x" ] ; then
         echo "$var is set to ${var}"
     else

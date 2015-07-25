@@ -11,7 +11,8 @@ l_db_pass= # local database password
 
 r_db_name= # remote database name
 r_db_user= # remote database user
-r_db_pass= # remoate database password
+r_db_pass= # remote database password
+r_db_host= # use if the remote database is running on a different host, but only reachable from the r_host
 
 l_upload_dir= # optional – local wordpress upload folder www/wp-content/uploads/ (relative to local working directory)
 r_upload_dir= # optional – remote wordpress upload folder project/www/wp-content/uploads/ (relative to remote login/home directory)
